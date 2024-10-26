@@ -1,0 +1,34 @@
+
+{% load static %}
+
+{% block title %}
+<h1>Registration</h1>
+{% endblock %}
+{% block content %}
+<form action="{% url 'api_reg' %}" method="POST">
+    <label for="number">Номер телефона: </label>
+    <input type="text" name="number" id="number">
+    <br>
+    <label for="name">Ваше имя: </label>
+    <input type="text" name="name" id="name">
+    <br>
+    <label for="password1">Пароль</label>
+    <input type="password" name="password1" id="password1">
+    <br>
+    <select name="kind">
+        <option value="client">Клиент</option>
+        <option value="taxist">Таксист</option>
+        <option value="courier">Курьер</option>
+    </select>
+    <br>
+    <label for="password2">Подтвердите пароль: </label>
+    <input type="password" name="password2" id="password2">
+    <br>
+    <input type="submit" value="Зарегистрироваться">
+    {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block auth %}
+<a href="{% url 'auth' %}">Уже зарегестрированы?</a>
+{% endblock %}

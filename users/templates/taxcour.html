@@ -1,0 +1,97 @@
+{% load static %}
+
+<script src="https://maps.api.2gis.ru/2.0/loader.js?pkg=full"></script>
+
+{% block deauth %}
+<a href="{% url 'deauth' %}">Выйти</a>
+<br>
+{% endblock %}
+
+{% block title %}
+<h1>Home</h1>
+{% endblock %}
+Welcome!
+
+<h1>Your Orders:</h1>
+{% block orders %}
+    {% for order in orders %}
+    <script type="text/javascript">
+      console.log('{{order.is_active}}')
+    </script>
+    {% if order.is_active %}
+    <h2>Offer</h2>
+    <p>Distance: {{order.distance}}</p>
+    <p>Price: {{order.price}}</p>
+    <a href="{% url 'api_start_order' order.pk %}">Start</a>
+    {% else %}
+    <h3>Start time: {{order.start}}</h3>
+    <p>Distance: {{order.distance}}</p>
+    <p>Price: {{order.price}}</p>
+    <p>Status: {{order.status}}</p>
+    <p>End time: {{order.end}}</p>
+    <br>
+    {% endif %}
+    {% endfor %}
+{% endblock %}
+
+{% block geoposition %}
+<form action="" method="POST">
+  <input type="text" id="geoposition" name="geoposition" value="" hidden disabled>
+  {% csrf_token %}
+</form>
+
+<div id="map" style="width:500px; height:400px"></div>
+<script type="text/javascript">
+  let x = document.querySelector("#geoposition");
+  let map;
+
+  function getLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(showPosition);
+    } else {
+      console.error("Geolocation is not supported by this browser.")
+      x.value = "";
+    }
+  }
+
+  function showPosition(position) {
+    x.value = position.coords.latitude + " " + position.coords.longitude;
+    const coordinates = x.value.split(' ');
+
+    if (!map) {
+      DG.then(function () {
+        map = DG.map('map', {
+          center: [coordinates[0], coordinates[1]],
+          zoom: 13
+        });
+
+        DG.marker([coordinates[0], coordinates[1]])
+          .bindPopup('You').addTo(map);
+      });
+    } else {
+      map.setView([coordinates[0], coordinates[1]], 13);
+      map.eachLayer(function (layer) {
+        if (layer instanceof DG.Marker) {
+          layer.setLatLng([coordinates[0], coordinates[1]]);
+        }
+      });
+    }}
+
+  getLocation();
+
+  setInterval(() => {
+    getLocation();
+    fetch('/users/api/v1/getPosition', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        'position': x.value,
+      }),
+    });
+}, 1000);
+</script>
+{% endblock %}

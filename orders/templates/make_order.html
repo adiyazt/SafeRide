@@ -1,0 +1,43 @@
+{% load static %}
+
+{% block title %}
+<h1>Call Taxi</h1>
+{% endblock %}
+{% block content %}
+<form action="{% url 'api_make_order' taxistId  %}" method="GET">
+    <label for="geoposition">Откуда? </label>
+    <input type="text" name="geoposition" id="geoposition">
+    <br>
+    <br>
+    <label for="next_pos">Куда?</label>
+    <input type="next_pos" name="next_pos" id="next_pos">
+    <br>
+    <input type="submit" value="Заказать">
+    {% csrf_token %}
+</form>
+
+<script type="text/javascript">  
+  let x = document.querySelector("#geoposition");
+
+  function getLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(showPosition);
+    } else {
+      console.error("Geolocation is not supported by this browser.")
+      x.value = "";
+    }
+  }
+
+  function showPosition(position) {
+    x.value = position.coords.latitude + " " + position.coords.longitude;
+    const coordinates = x.value.split(' ');
+  }
+
+  getLocation()
+</script>
+
+{% endblock %}
+
+{% block auth %}
+<a href="{% url 'home' %}">Обратно</a>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% load static %}
+
+{% block title %}
+<h1>Order: </h1>
+{% endblock %}
+{% block content %}
+Distance: {{ distance }} km
+<br>
+Price: {{ price }} KZT
+<br>
+Taxist: {{ taxist }}
+<br>
+{% endblock %}
+
+{% block end %}
+{% if is_taxist %}
+<a href="{% url 'api_end_order' order.pk %}">End order</a>
+{% endif %}
+{% endblock %}
+
+{% block auth %}
+<a href="{% url 'home' %}">Home</a>
+{% endblock %}

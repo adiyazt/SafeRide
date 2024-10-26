@@ -1,0 +1,101 @@
+{% load static %}
+
+<script src="https://maps.api.2gis.ru/2.0/loader.js?pkg=full"></script>
+
+{% block deauth %}
+<a href="{% url 'deauth' %}">Выйти</a>
+<br>
+{% endblock %}
+
+{% block title %}
+<h1>Home</h1>
+{% endblock %}
+Welcome!
+
+
+{% block geoposition %}
+<input type="text" id="geoposition" name="geoposition" value="" hidden disabled>
+{% for taxist in taxists %}
+<input type="text" name="taxist_id" class="taxist_id" value="{{ taxist.pk }}" hidden disabled>
+<input type="text" name="taxist_geoposition" class="taxist_geoposition" value="{{ taxist.geoposition }}" hidden disabled>
+{% endfor %}
+
+<div id="map" style="width:500px; height:400px"></div>
+<script type="text/javascript">
+  let x = document.querySelector("#geoposition");
+  let map;
+
+  const taxist_ids = document.querySelectorAll('.taxist_id')
+  const taxist_geopositions = document.querySelectorAll('.taxist_geoposition')
+
+  function getLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(showPosition);
+    } else {
+      console.error("Geolocation is not supported by this browser.")
+      x.value = "";
+    }
+  }
+
+  function showPosition(position) {
+    x.value = position.coords.latitude + " " + position.coords.longitude;
+    const coordinates = x.value.split(' ');
+
+    if (!map) {
+      DG.then(function () {
+        map = DG.map('map', {
+          center: [coordinates[0], coordinates[1]],
+          zoom: 13
+        });
+
+        DG.marker([coordinates[0], coordinates[1]])
+          .bindPopup('You').addTo(map);
+
+          for (let i = 0; i < taxist_ids.length; i++) {
+            (function(index) {
+                let taxist_coords = taxist_geopositions[index].value.split(' ');
+                var customIcon = DG.divIcon({
+                    className: 'custom-div-icon',
+                    html: '<img src="/static/images/taxi.png" style="width: 32px; height: 32px;">'
+                });
+        
+                var marker = DG.marker([taxist_coords[0], taxist_coords[1]], {
+                    icon: customIcon
+                }).addTo(map);
+        
+                marker.on('click', function() {
+                    window.location.href = '/api/v1/call_taxi/' + taxist_ids[index].value;
+                });
+        
+                console.log(taxist_geopositions[index], taxist_coords);
+            })(i);
+        }
+      }) 
+    } else {
+      map.setView([coordinates[0], coordinates[1]], 13);
+      map.eachLayer(function (layer) {
+        if (layer instanceof DG.Marker) {
+          layer.setLatLng([coordinates[0], coordinates[1]]);
+        }
+      });
+    }
+  }
+
+  getLocation();
+
+  setInterval(() => {
+    getLocation();
+    fetch('/users/api/v1/getPosition', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        'position': x.value,
+      }),
+    });
+  }, 1000);
+</script>
+{% endblock %}
